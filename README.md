@@ -23,6 +23,9 @@ The docker is ran with the following command:
 docker run -it -v $srcDir:/src  <DOCKER_NAME>:<DOCKER_VERSION>
 ```
 
+## Generate docs
+Run `amm doc-generator.sc`
+
 ## Test
 
 For a faster development loop you can create a Docker image based on the JVM instead of creating a native-image:
