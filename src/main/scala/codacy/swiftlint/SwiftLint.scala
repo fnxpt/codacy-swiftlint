@@ -47,10 +47,6 @@ object SwiftLint extends Tool {
     }
   }
 
-  def nativeConfigurationFile(source: Source.Directory): Option[String] = {
-    FileHelper.findConfigurationFile(Paths.get(source.path), nativeConfigFileNames).map(_.toString)
-  }
-
   def configsFromCodacyConfiguration(
       configuration: Option[List[Pattern.Definition]]
   )(implicit specification: Tool.Specification): Option[String] = {
@@ -60,16 +56,6 @@ object SwiftLint extends Tool {
       case patternsToLint if patternsToLint.nonEmpty =>
         Some(writeConfigFile(patternsToLint).toString)
     }
-  }
-
-  def lintConfiguration(source: Source.Directory, configuration: Option[List[Pattern.Definition]])(
-      implicit specification: Tool.Specification
-  ): Option[String] = {
-    lazy val nativeConfig = nativeConfigurationFile(source)
-
-    val config = configsFromCodacyConfiguration(configuration)
-
-    config.orElse(nativeConfig)
   }
 
   private def commandToRun(configOpt: Option[String], file: String): List[String] = {
@@ -120,7 +106,7 @@ object SwiftLint extends Tool {
 
       val filesToLint = listOfFilesToLint(files, source)
 
-      val cfgOpt = lintConfiguration(source, configuration)
+      val cfgOpt = configsFromCodacyConfiguration(configuration)
 
       filesToLint.flatMap { file =>
         val command: List[String] = commandToRun(cfgOpt, file)

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<checkstyle version="1.5">
+    <file name="closing_brace.swift">
+        <error source="jira_todo" line="1" message="TODO\/FIXME is not acceptable without JIRA TASK ID. Include Jira ID in the message: `TODO: [ABC-XXX] Fix this line`" severity="warning" />
+    </file>
+    <file name="dynamic_inline.swift"></file>
+</checkstyle>
