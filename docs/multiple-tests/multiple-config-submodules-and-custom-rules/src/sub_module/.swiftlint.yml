@@ -1,0 +1,5 @@
+custom_rules:
+  jira_todo:
+    name: "TODOs and FIXMEs should be resolved or task should be created"
+    regex: '\b(?:TODO|FIXME)[^\[]*(?!\[[\w-]+\])[^\[]*$'
+    message: "TODO/FIXME is not acceptable without JIRA TASK ID. Include Jira ID in the message: `TODO: [ABC-XXX] Fix this line`"

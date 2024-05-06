@@ -1,33 +1,52 @@
 
-[![Build Status](https://circleci.com/gh/fnxpt/codacy-swiftlint.svg?style=shield&circle-token=:circle-token)](https://circleci.com/gh/fnxpt/codacy-swiftlint)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/c19f9b18251e4dc5bce89b0a70d0bc70)](https://app.codacy.com/gh/codacy/codacy-swiftlint?utm_source=github.com&utm_medium=referral&utm_content=codacy/codacy-swiftlint&utm_campaign=Badge_Grade_Settings)
+[![Build Status](https://circleci.com/gh/codacy/codacy-swiftlint.svg?style=svg)](https://circleci.com/gh/codacy/codacy-swiftlint)
 
 # Codacy Swiftlint
 
 This is the docker engine we use at Codacy to have [Swiftlint](https://github.com/realm/SwiftLint) support.
 You can also create a docker to integrate the tool and language of your choice!
-Check the **Docs** section for more information.
+See the [codacy-engine-scala-seed](https://github.com/codacy/codacy-engine-scala-seed) repository for more information.
 
 ## Usage
 
-You can create the docker by doing:
+You need to create the DEV image:
 
+```bash
+sbt stage
+docker build -t codacy-swiftlint-dev -f Dockerfile.dev .
 ```
-sbt docker:publishLocal
+
+then you can create the docker by doing:
+**note**  The works only on Linux for now, for local test use the DEV image
+
+```bash
+sbt nativeImage
+docker build -t codacy-swiftlint .
 ```
 
 The docker is ran with the following command:
 
-```
+```bash
 docker run -it -v $srcDir:/src  <DOCKER_NAME>:<DOCKER_VERSION>
 ```
 
-## Docs
-
-[Tool Developer Guide](https://support.codacy.com/hc/en-us/articles/207994725-Tool-Developer-Guide)
-
-[Tool Developer Guide - Using Scala](https://support.codacy.com/hc/en-us/articles/207280379-Tool-Developer-Guide-Using-Scala)
+## Generate docs
+Build the DEV image and then run:
+```
+CONTAINER=$(docker run -d --entrypoint sh -it --rm codacy-swiftlint-dev)
+docker cp $CONTAINER:/docs .
+docker kill $CONTAINER
+```
 
 ## Test
+
+For a faster development loop you can create a Docker image based on the JVM instead of creating a native-image:
+
+```bash
+sbt universal:stage
+docker build -t codacy-swiftlint-dev -f Dockerfile.dev .
+```
 
 We use the [codacy-plugins-test](https://github.com/codacy/codacy-plugins-test) to test our external tools integration.
 You can follow the instructions there to make sure your tool is working as expected.

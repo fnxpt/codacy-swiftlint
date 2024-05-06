@@ -1,0 +1,60 @@
+version: 2.1
+
+orbs:
+  codacy: codacy/base@12.0.0
+  codacy_plugins_test: codacy/plugins-test@2.0.11
+
+workflows:
+  compile_test_deploy:
+    jobs:
+      - codacy/checkout_and_version:
+          write_sbt_version: true
+      - codacy/sbt_docker:
+          name: publish_docker_local
+          steps:
+            - run:
+                name: Check Scalafmt on sources
+                command: sbt scalafmtCheckAll
+            - run:
+                name: Check Scalafmt on Sbt sources
+                command: sbt scalafmtSbtCheck
+            - run:
+                name: Build DEV java tool
+                command: sbt stage
+            - run:
+                name: Build Documentation generator
+                command: sbt doc-generator/stage
+            - run:
+                name: Build DEV image (runs doc-generator)
+                command: docker build -t codacy-swiftlint-dev -f Dockerfile.dev .
+            - run:
+                name: Build Graalvm native-image
+                command: sbt nativeImage
+            - run:
+                name: Build release Docker image
+                command: docker build -t $CIRCLE_PROJECT_REPONAME:latest .
+            - run:
+                name: Save Docker image to workspace
+                command: docker save --output docker-image.tar $CIRCLE_PROJECT_REPONAME:latest
+          persist_to_workspace: true
+          cache_prefix: sbt-cache-09012023
+          requires:
+            - codacy/checkout_and_version
+      - codacy_plugins_test/run:
+          name: plugins_test
+          run_multiple_tests: true
+          requires:
+            - publish_docker_local
+      - codacy/publish_docker:
+          context: CodacyDocker
+          requires:
+            - plugins_test
+          filters:
+            branches:
+              only:
+                - master
+      - codacy/tag_version:
+          name: tag_version
+          context: CodacyAWS
+          requires:
+            - codacy/publish_docker
