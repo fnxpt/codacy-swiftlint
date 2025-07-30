@@ -1,65 +1,27 @@
-import com.typesafe.sbt.packager.docker.{Cmd, ExecCmd}
+organization := "com.codacy"
 
-name := """codacy-swiftlint"""
+name := "codacy-swiftlint"
 
-version := "1.0.0-SNAPSHOT"
+ThisBuild / scalaVersion := "2.13.16"
 
-val languageVersion = "2.11.11"
-
-scalaVersion := languageVersion
-
-resolvers ++= Seq(
-  "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/releases",
-  "Typesafe Repo" at "http://repo.typesafe.com/typesafe/releases/"
-)
-
-libraryDependencies ++= Seq(
-  "com.typesafe.play" %% "play-json" % "2.4.8",
-  "com.codacy" %% "codacy-engine-scala-seed" % "2.7.9" withSources()
-)
+enablePlugins(NativeImagePlugin)
 
 enablePlugins(JavaAppPackaging)
 
-enablePlugins(DockerPlugin)
+libraryDependencies ++= Seq(
+  "com.codacy" %% "codacy-engine-scala-seed" % "6.1.5",
+  "com.github.pathikrit" %% "better-files" % "3.9.2"
+)
 
-version in Docker := "1.0.0-SNAPSHOT"
+Compile / mainClass := Some("codacy.Engine")
 
-organization := "com.codacy"
+nativeImageOptions ++= Seq("-O1", "-H:+ReportExceptionStackTraces", "--no-fallback", "--no-server")
 
-val swiftlintVersion = "0.23.1"
-
-val installAll =
-  s"""apt-get update &&
-     |apt-get install default-jre --assume-yes""".stripMargin.replaceAll(System.lineSeparator(), " ")
-
-mappings in Universal <++= (resourceDirectory in Compile) map { (resourceDir: File) =>
-  val src = resourceDir / "docs"
-  val dest = "/docs"
-
-  for {
-    path <- (src ***).get
-    if !path.isDirectory
-  } yield path -> path.toString.replaceFirst(src.toString, dest)
-}
-
-
-val dockerUser = "docker"
-val dockerGroup = "docker"
-
-daemonUser in Docker := dockerUser
-
-daemonGroup in Docker := dockerGroup
-
-dockerBaseImage := "mkujalowicz/swiftlint:0.23.0"
-
-dockerCommands := dockerCommands.value.flatMap {
-  case cmd@Cmd("WORKDIR", _) => List(cmd,
-    Cmd("RUN", installAll)
+lazy val `doc-generator` = project
+  .settings(
+    libraryDependencies ++= Seq(
+      "com.codacy" %% "codacy-engine-scala-seed" % "6.1.5",
+      "com.lihaoyi" %% "os-lib" % "0.10.0"
+    )
   )
-  case cmd@(Cmd("ADD", "opt /opt")) => List(cmd,
-    Cmd("RUN", "mv /opt/docker/docs /docs"),
-    Cmd("RUN", s"""adduser --uid 2004 --disabled-password --gecos \"\" $dockerUser"""),
-    ExecCmd("RUN", Seq("chown", "-R", s"$dockerUser:$dockerGroup", "/docs"): _*)
-  )
-  case other => List(other)
-}
+  .enablePlugins(JavaAppPackaging)

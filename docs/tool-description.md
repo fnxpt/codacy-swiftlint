@@ -1,0 +1,1 @@
+SwiftLint enforces Swift style and conventions, loosely based on GitHub's Swift Style Guide. [Learn more](https://github.com/realm/SwiftLint)
